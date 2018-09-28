@@ -1,7 +1,7 @@
 /* 
  * CS:APP Data Lab 
  * 
- * <Please put your name and userid here>
+ * <Taylor Ellis - Tael8741>
  * 
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
@@ -175,7 +175,8 @@ NOTES:
  *   Rating: 1
  */
 int bitOr(int x, int y) {
-  return 2;
+ /* Demorgans Law */          
+ return ~(~x & ~y);        
 }
 /* 
  * evenBits - return word with all even-numbered bits set to 1
@@ -184,7 +185,10 @@ int bitOr(int x, int y) {
  *   Rating: 1
  */
 int evenBits(void) {
-  return 2;
+    int x = 0x55; /* allEvenBits */
+    x = x|(x<<8); 
+    x = x|(x<<16);
+    return x;
 }
 /* 
  * minusOne - return a value of -1 
@@ -193,7 +197,7 @@ int evenBits(void) {
  *   Rating: 1
  */
 int minusOne(void) {
-  return 2;
+    return ~0;
 }
 /* 
  * allEvenBits - return 1 if all even-numbered bits in word set to 1
@@ -202,9 +206,14 @@ int minusOne(void) {
  *   Max ops: 12
  *   Rating: 2
  */
+
 int allEvenBits(int x) {
-  return 2;
+   int mask = 0xAA;  /*odd bit mask*/
+   mask = mask | (mask << 8);
+   mask = mask | (mask << 16);
+   return !((x | mask) ^ (~0)); /* if all even -> 0 -> !0 -> 1 */
 }
+
 /* 
  * anyOddBit - return 1 if any odd-numbered bit in word set to 1
  *   Examples anyOddBit(0x5) = 0, anyOddBit(0x7) = 1
@@ -212,9 +221,13 @@ int allEvenBits(int x) {
  *   Max ops: 12
  *   Rating: 2
  */
-int anyOddBit(int x) {
-    return 2;
+int anyOddBit(int x) {  
+    int mask = 0xAA; /* odd bit mask */
+    mask = mask | (mask << 8);
+    mask = mask | (mask << 16);
+    return !!(mask & x); /* if odd bit is turned on, ! returns 0 (nonzero), ! again to return 1*/
 }
+\
 /* 
  * byteSwap - swaps the nth byte and the mth byte
  *  Examples: byteSwap(0x12345678, 1, 3) = 0x56341278
@@ -225,7 +238,18 @@ int anyOddBit(int x) {
  *  Rating: 2
  */
 int byteSwap(int x, int n, int m) {
-    return 2;
+   int mask = 0xFF;  /*mask*/
+   int shiftN = n << 3;  /* gets corresponding number of bits needed for shift*/
+   int shiftM = m << 3;
+   int byteN = (mask << shiftN)&x; /*shift bit to place in x, and*/
+   int byteM = (mask << shiftM)&x;
+   int mask2 = (mask << shiftN) | (mask << shiftM); /*flip on from swapped bytes*/
+   byteN = (byteN >> shiftN)&mask; /*shift swapped bytes backk to left */
+   byteM = (byteM >> shiftM)&mask;
+   byteN = byteN << shiftM; /*shift to new pos */
+   byteM = byteM << shiftN;
+   mask2 = (~mask2 & x) | byteM | byteN;  /*get non changed part and combine w/ new */
+   return mask2; 
 }
 /* 
  * addOK - Determine if can compute x+y without overflow
@@ -236,17 +260,28 @@ int byteSwap(int x, int n, int m) {
  *   Rating: 3
  */
 int addOK(int x, int y) {
-  return 2;
+  /* find sign bits of x & y and sign of their sum
+     diff signs -> cannot overflow
+     two pos -> neg -> overflow (vice-versa)
+  */ 
+  int xsign = x>>31;
+  int ysign = y>>31;
+  int sum = x + y;
+  sum = sum >> 31;      
+  return !((~(xsign^ysign)) & (xsign ^ sum)); 
+  /*if signs same sum different, overflow. same sign same sum no overflow */
 }
 /* 
- * conditional - same as x ? y : z 
+ * conditional - same as x ? y : z  (if x is not zero return y, else return z)
  *   Example: conditional(2,4,5) = 4
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 16
  *   Rating: 3
  */
+ 
 int conditional(int x, int y, int z) {
-  return 2;
+    int mask = (!x+(~0x00)); /* if non-zero -> 0 if zero -> 1*/
+    return ((~mask) & z) | ((mask) & y) ;
 }
 /* 
  * isAsciiDigit - return 1 if 0x30 <= x <= 0x39 (ASCII codes for characters '0' to '9')
@@ -258,7 +293,11 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+   int uB = ~x + 0x3A; /* 1 more and one less to get >= <=*/
+   int lB = x + ~0x2f; /* negative if outside of bounds */
+   uB = uB >> 31;
+   lB = lB >> 31; 
+   return !(uB | lB); /*if negative (nonzero) will return 0, 1 if zero (within bounds)*/
 }
 /* 
  * replaceByte(x,n,c) - Replace byte n in x with c
@@ -270,8 +309,11 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int replaceByte(int x, int n, int c) {
-  return 2;
-}
+  int mask = 0xff << (n << 3); /* create mask and get bits from byte */
+  int s = (c << (n << 3)); /* move c to right byte*/
+  return (~mask & x) | s; /* gets c to right pos and gets orgin */
+    
+} 
 /* reverseBits - reverse the bits in a 32-bit integer,
               i.e. b0 swaps with b31, b1 with b30, etc
  *  Examples: reverseBits(0x11111111) = 0x88888888
@@ -285,7 +327,8 @@ int replaceByte(int x, int n, int c) {
  *  Rating: 4
  */
 int reverseBits(int x) {
-  return 0;
+ 
+    
 }
 /*
  * satAdd - adds two numbers but when positive overflow occurs, returns
@@ -298,8 +341,15 @@ int reverseBits(int x) {
  *   Rating: 4
  */
 int satAdd(int x, int y) {
-  return 2;
+  int sum, mask, s, max;
+  sum = x+y;
+  mask = ((sum^x) & (sum^y))>>31; /*all 1 if overflow, 0s if not */
+  s = sum & ~mask;	/* all zeros if overflow,  get sum */   
+  max = mask & ((1<<31) + (sum>>31));  /* 1000.. + sign (0,1) */
+  return s | max; 
 }
+
+
 /*
  * Extra credit
  */
@@ -315,7 +365,12 @@ int satAdd(int x, int y) {
  *   Rating: 2
  */
 unsigned float_abs(unsigned uf) {
-  return 2;
+  unsigned t = uf & 0x7fffffff;  /* sign bit to zero*/
+  
+  if (t > 0x7f800000) /* before toggling have to check if NaN, return agrument */
+    return uf;
+  else                /* else return with sign bit to zero (pos)*/
+    return t;
 }
 /* 
  * float_f2i - Return bit-level equivalent of expression (int) f
